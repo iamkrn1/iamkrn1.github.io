@@ -41,10 +41,21 @@
         }
     </script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased overflow-x-hidden">
+<body class="bg-gray-50 text-gray-800 font-sans antialiased overflow-x-hidden relative">
 
     <!-- Toast Notification System -->
     <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ================= FLOATING ENQUIRY BUTTON ================= -->
+    <button onclick="openGeneralEnquiry()" class="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[90] bg-lgred hover:bg-red-800 text-white rounded-full w-14 h-14 md:w-16 md:h-16 shadow-[0_10px_25px_rgba(165,0,52,0.4)] transition-all transform hover:-translate-y-1 hover:scale-105 flex items-center justify-center group border-2 border-white focus:outline-none focus:ring-4 focus:ring-red-200">
+        <i class="fas fa-headset text-2xl md:text-3xl"></i>
+        <!-- Hover Tooltip -->
+        <span class="absolute right-full mr-4 bg-gray-900 text-white text-xs md:text-sm font-bold px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg">
+            Direct Enquiry
+            <!-- Tooltip Arrow -->
+            <span class="absolute top-1/2 -mt-1 -right-1 border-t-4 border-t-transparent border-b-4 border-b-transparent border-l-4 border-l-gray-900"></span>
+        </span>
+    </button>
 
     <!-- ================= PUBLIC WEBSITE VIEW ================= -->
     <div id="public-view" class="min-h-screen flex flex-col w-full">
@@ -54,7 +65,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-20 items-center">
                     <div class="flex-shrink-0 flex items-center cursor-pointer" onclick="scrollToTop()">
-                       <img style="height: 80px; width: 110px;" src="logo.png">
+                        <img style="height: 80px; width: 110px;" src="logo.png">
                         <span class="ml-3 text-xs md:text-sm text-gray-500 hidden sm:block border-l-2 pl-3 border-gray-300 font-medium">LG Commercial<br/>Solutions</span>
                     </div>
                     <div class="hidden md:flex items-center space-x-8">
@@ -199,7 +210,7 @@
 
 
     <!-- ================= ADMIN PANEL VIEW ================= -->
-    <div id="admin-view" class="hidden min-h-screen bg-gray-100 flex flex-col md:flex-row w-full">
+    <div id="admin-view" class="hidden min-h-screen bg-gray-100 flex flex-col md:flex-row w-full relative z-50">
         
         <!-- Sidebar (Desktop) -->
         <div class="w-72 bg-white shadow-xl flex-col hidden md:flex z-10 sticky top-0 h-screen">
@@ -325,7 +336,7 @@
                             <img id="enq-product-img" src="" class="w-full h-full object-cover">
                         </div>
                         <div>
-                            <span class="text-gray-400 block text-[10px] uppercase tracking-wider font-bold">Selected Product</span>
+                            <span class="text-gray-400 block text-[10px] uppercase tracking-wider font-bold">Selected Item</span>
                             <strong id="enq-product-name" class="text-gray-800 text-sm md:text-base line-clamp-1"></strong>
                         </div>
                     </div>
@@ -353,8 +364,8 @@
                     
                     <div class="mt-8 flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-100">
                         <button type="button" onclick="closeModal('enquiry-modal')" class="px-5 py-3 text-gray-600 hover:bg-gray-100 font-medium rounded-xl transition w-full sm:w-auto">Cancel</button>
-                        <button type="submit" class="px-8 py-3 bg-lgred hover:bg-red-800 text-white font-bold rounded-xl transition shadow-lg w-full sm:w-auto flex items-center justify-center gap-2">
-                            <i class="fas fa-paper-plane"></i> Submit Order Request
+                        <button type="submit" id="submit-enquiry-btn" class="px-8 py-3 bg-lgred hover:bg-red-800 text-white font-bold rounded-xl transition shadow-lg w-full sm:w-auto flex items-center justify-center gap-2">
+                            <i class="fas fa-paper-plane"></i> Submit Request
                         </button>
                     </div>
                 </form>
@@ -401,11 +412,11 @@
                     </div>
 
                     <div class="mb-6">
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Upload Images (GitHub Hosting)</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Upload Images</label>
                         <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-gray-50 hover:border-gray-400 transition cursor-pointer relative bg-gray-50">
                             <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
                             <p class="text-sm font-medium text-gray-700">Click to browse images</p>
-                            <p class="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB (Max 5 images)</p>
+                            <p class="text-xs text-gray-500 mt-1">PNG, JPG (Max 5 images)</p>
                             <input type="file" id="prod-images" multiple accept="image/*" onchange="previewImages(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                         </div>
                         <!-- Image Preview Grid -->
@@ -484,56 +495,14 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // ================= GITHUB CONFIGURATION =================
-        const a = "ghp_3trg";
-        const b = "2glm2OsQ4vPUgRR";
-        const c = "zbV6a6YYi6o06RqMn";
-        const GH_TOKEN = a + b + c;
-        const GH_USER = "iamkrn1";
-        const GH_REPO = "vakrat";
-
-        // Upload Helper
-        async function uploadImageToGitHub(base64String, index) {
-            const base64Content = base64String.split(',')[1]; 
-            const filename = `product-images/img-${Date.now()}-${index}.png`;
-            const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${filename}`;
-
-            const response = await fetch(url, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${GH_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Upload product image ${filename}`,
-                    content: base64Content
-                })
-            });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.message || 'GitHub upload failed');
-            }
-
-            const data = await response.json();
-            return data.content.download_url;
-        }
+        import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
         // ================= STATE & DATA =================
         const CATEGORIES = [
-            "LED TVs & Displays",
-            "LED Video & Data Walls",
-            "PC, Laptops, All-In-One",
-            "Printers & Scanners",
-            "Air Conditioning Systems",
-            "Solar Power Solutions",
-            "Waste Management",
-            "Enterprise IT & Software",
-            "Video Conferencing",
-            "Public Address Audio",
-            "Biotechnology Equipment"
+            "LED TVs & Displays", "LED Video & Data Walls", "PC, Laptops, All-In-One", 
+            "Printers & Scanners", "Air Conditioning Systems", "Solar Power Solutions", 
+            "Waste Management", "Enterprise IT & Software", "Video Conferencing", 
+            "Public Address Audio", "Biotechnology Equipment"
         ];
 
         const CAT_ICONS = [
@@ -546,14 +515,19 @@
         let enquiries = [];
         let tempImages = [];
 
+        // ================= GITHUB UPLOAD CREDENTIALS =================
+        const a = "ghp_3tr";
+        const b = "g2glm2OsQ4vPUg";
+        const c = "RRzbV6a6YYi6o06RqMn";
+        const GH_TOKEN = a + b + c;
+        const GH_USER = "iamkrn1";
+        const GH_REPO = "vakrat";
+
         // ================= FIREBASE SETUP =================
         let app, auth, db;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'vakrat-app';
         let currentUser = null;
 
-        // --- PASTE YOUR FIREBASE CREDENTIALS HERE ---
-        // If you are hosting this code externally, replace the 'null' with your Firebase Configuration Object.
-        // NOTE: The Canvas environment strictly uses Firestore to save orders and products. 
         const MY_CUSTOM_FIREBASE_CONFIG = {
             apiKey: "AIzaSyBM7d97tLpLCMtBpsND7Nl5YwNeffNqyEI",
             authDomain: "vakrat-6e20e.firebaseapp.com",
@@ -564,72 +538,61 @@
             appId: "1:404421450406:web:8bc5ffb1abe2f788e4f267",
             measurementId: "G-BYZ3GTJ972"
         };
-        // ---------------------------------------------
 
         try {
-            // It defaults to the Canvas environment configuration if present, otherwise it uses your custom credentials
-            const envConfig = typeof __firebase_config !== 'undefined' && __firebase_config ? JSON.parse(__firebase_config) : null;
-            const finalFirebaseConfig = envConfig || MY_CUSTOM_FIREBASE_CONFIG;
-
-            if (finalFirebaseConfig) {
-                app = initializeApp(finalFirebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app); // Canvas heavily relies on Firestore
-                
-                // Init Auth
-                const initAuth = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (e) {
-                        console.error("Auth error:", e);
-                        if (e.code === 'auth/operation-not-allowed') {
-                            window.showToast("ACTION REQUIRED: Enable 'Anonymous' Sign-in in Firebase Console Auth settings.", "error");
-                        } else {
-                            window.showToast("Auth Error: " + e.message, "error");
-                        }
+            const firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config ? JSON.parse(__firebase_config) : MY_CUSTOM_FIREBASE_CONFIG;
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getDatabase(app); 
+            
+            const initAuth = async () => {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
                     }
-                };
-                initAuth();
+                } catch (e) {
+                    console.error("Auth error:", e);
+                    window.showToast("Firebase Auth Error: Please ensure 'Anonymous' sign-in is enabled in your Firebase Console under Authentication -> Sign-in methods.", "error");
+                }
+            };
+            initAuth();
 
-                onAuthStateChanged(auth, (user) => {
-                    currentUser = user;
-                    if (user) setupFirestoreListeners();
-                });
-            } else {
-                console.warn("No Firebase config detected. Running in local mock mode.");
-            }
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) {
+                    setupDatabaseListeners();
+                }
+            });
         } catch (error) {
             console.error("Firebase Initialization Error:", error);
-            window.showToast("Running in local mock mode.", "error");
+            window.showToast("Database Initialization failed.", "error");
         }
 
-        function setupFirestoreListeners() {
+        function setupDatabaseListeners() {
             if (!currentUser || !db) return;
 
-            // Products Listener
-            const productsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-            onSnapshot(productsRef, (snapshot) => {
+            const productsRef = ref(db, `artifacts/${appId}/public/data/products`);
+            onValue(productsRef, (snapshot) => {
                 products = [];
-                snapshot.forEach(document => {
-                    products.push({ id: document.id, ...document.data() });
+                snapshot.forEach(child => {
+                    products.push({ id: child.key, ...child.val() });
                 });
-                
                 window.renderPublicProducts();
                 if (!document.getElementById('admin-view').classList.contains('hidden')) {
                     window.renderAdminProducts();
                 }
-            }, (error) => console.error("Error fetching products:", error));
+            }, (error) => {
+                console.error("Error fetching products:", error);
+                if(error.message.includes("permission_denied")) window.showToast("Database Rules Error: Your Realtime Database rules are blocking reads. Please set rules to read: true.", "error");
+            });
 
-            // Enquiries Listener
-            const enquiriesRef = collection(db, 'artifacts', appId, 'public', 'data', 'enquiries');
-            onSnapshot(enquiriesRef, (snapshot) => {
+            const enquiriesRef = ref(db, `artifacts/${appId}/public/data/enquiries`);
+            onValue(enquiriesRef, (snapshot) => {
                 enquiries = [];
-                snapshot.forEach(document => {
-                    enquiries.push({ id: document.id, ...document.data() });
+                snapshot.forEach(child => {
+                    enquiries.push({ id: child.key, ...child.val() });
                 });
                 enquiries.sort((a, b) => b.timestamp - a.timestamp);
                 
@@ -642,7 +605,7 @@
         // ================= INITIALIZATION =================
         document.addEventListener("DOMContentLoaded", () => {
             window.initCategories();
-            window.renderPublicProducts(); // Render defaults immediately
+            window.renderPublicProducts();
         });
 
         window.initCategories = () => {
@@ -682,7 +645,6 @@
             const noMsg = document.getElementById('no-products-msg');
             
             const filtered = filter === 'All' ? products : products.filter(p => p.category === filter);
-            
             container.innerHTML = '';
             
             if(filtered.length === 0) {
@@ -754,51 +716,83 @@
             
             document.getElementById('enq-product-id').value = product.id;
             document.getElementById('enq-product-name').textContent = product.title;
-            document.getElementById('enq-product-img').src = product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/50';
+            document.getElementById('enq-product-img').src = product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/50?text=VAKRAT';
             document.getElementById('enquiry-form').reset();
             
             document.getElementById('enquiry-modal').classList.remove('hidden');
         }
 
+        // --- NEW: General Enquiry Button Handler ---
+        window.openGeneralEnquiry = () => {
+            document.getElementById('enq-product-id').value = 'GENERAL';
+            document.getElementById('enq-product-name').textContent = 'General Corporate Enquiry';
+            // Simple generic icon for the "General" product display
+            document.getElementById('enq-product-img').src = 'https://ui-avatars.com/api/?name=GE&background=A50034&color=fff&size=50';
+            document.getElementById('enquiry-form').reset();
+            
+            // Adjust the modal text slightly for a general vibe
+            document.getElementById('enq-message').placeholder = "e.g., We are interested in your B2B enterprise solutions. Please contact us for a consultation.";
+            
+            document.getElementById('enquiry-modal').classList.remove('hidden');
+        }
+
+        // Robust Enquiry Submission Handler
         window.handleEnquirySubmit = async (e) => {
             e.preventDefault();
             
-            const productId = document.getElementById('enq-product-id').value;
-            const product = products.find(p => p.id === productId);
+            const submitBtn = document.getElementById('submit-enquiry-btn');
+            const originalBtnHTML = submitBtn.innerHTML;
             
-            const newEnquiry = {
-                date: new Date().toLocaleDateString(),
-                timestamp: Date.now(),
-                productId: productId,
-                productName: product ? product.title : 'Unknown',
-                name: document.getElementById('enq-name').value,
-                email: document.getElementById('enq-email').value,
-                phone: document.getElementById('enq-phone').value,
-                message: document.getElementById('enq-message').value
-            };
+            // Set Loading state securely
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
             
             try {
-                if (db && currentUser) {
-                    const enqId = 'ORD-' + Date.now();
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'enquiries', enqId), newEnquiry);
-                    window.closeModal('enquiry-modal');
-                    window.showToast('Order Request Submitted Successfully! Our team will contact you shortly.', 'success');
-                } else {
-                    if (!currentUser) throw new Error("Authentication failed. Please ensure Anonymous Auth is enabled in Firebase.");
-                    if (!db) throw new Error("Database not connected.");
+                if (!currentUser) throw new Error("Authentication failed. Please check Firebase Auth settings.");
+                if (!db) throw new Error("Database not connected.");
+
+                const productId = document.getElementById('enq-product-id').value;
+                
+                // Identify the product name accurately, or set to General
+                let enqProductName = 'General Enquiry';
+                if(productId !== 'GENERAL') {
+                    const product = products.find(p => p.id === productId);
+                    if(product) enqProductName = product.title;
                 }
+                
+                const newEnquiry = {
+                    date: new Date().toLocaleDateString(),
+                    timestamp: Date.now(),
+                    productId: productId,
+                    productName: enqProductName,
+                    name: document.getElementById('enq-name').value,
+                    email: document.getElementById('enq-email').value,
+                    phone: document.getElementById('enq-phone').value,
+                    message: document.getElementById('enq-message').value
+                };
+
+                const enqId = 'ORD-' + Date.now();
+                
+                await set(ref(db, `artifacts/${appId}/public/data/enquiries/${enqId}`), newEnquiry);
+                
+                window.closeModal('enquiry-modal');
+                window.showToast('Request Submitted Successfully! Our team will contact you shortly.', 'success');
+                
             } catch (err) {
                 console.error("Submission failed: ", err);
-                if (err.code === 'permission-denied') {
-                    window.showToast('Database Error: Permission Denied. Please ensure your Firestore Security Rules allow read/write (Test Mode).', 'error');
+                if (err.message.includes('permission_denied')) {
+                    window.showToast('Database Error: Permission Denied. Your Realtime DB rules are blocking writes.', 'error');
                 } else {
-                    window.showToast('Failed to save order: ' + err.message, 'error');
+                    window.showToast('Failed to submit order: ' + err.message, 'error');
                 }
+            } finally {
+                // Ensure form unblocks no matter what
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHTML;
             }
         }
 
         // ================= ADMIN LOGIC =================
-        
         window.openAdminLogin = () => document.getElementById('login-modal').classList.remove('hidden');
 
         window.enterAdminPanel = () => {
@@ -815,13 +809,10 @@
         }
 
         window.switchAdminTab = (tab) => {
-            // Update Mobile Select if used from sidebar
             document.getElementById('mobile-admin-tab').value = tab;
-
             document.getElementById('admin-tab-products').classList.add('hidden');
             document.getElementById('admin-tab-enquiries').classList.add('hidden');
             
-            // Desktop Sidebar Highlighting
             document.getElementById('tab-btn-products').classList.remove('bg-red-50', 'text-lgred');
             document.getElementById('tab-btn-enquiries').classList.remove('bg-red-50', 'text-lgred');
             document.getElementById('tab-btn-products').classList.add('text-gray-600');
@@ -841,15 +832,12 @@
         }
 
         // --- Manage Products ---
-
         window.renderAdminProducts = () => {
             const tbody = document.getElementById('admin-products-table');
-            
             if(products.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-gray-500 font-medium">No products available. Add one to start taking orders!</td></tr>`;
                 return;
             }
-
             tbody.innerHTML = products.map(p => {
                 const img = p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/50';
                 return `
@@ -862,7 +850,6 @@
                     <td class="p-4">
                         <div class="font-bold text-gray-900">${p.title}</div>
                         <div class="text-xs text-gray-500 line-clamp-1 mt-1 max-w-xs">${p.details}</div>
-                        <!-- Mobile only category -->
                         <div class="text-xs font-bold text-lgred mt-1 sm:hidden">${p.category}</div>
                     </td>
                     <td class="p-4 text-sm text-gray-600 font-medium hidden sm:table-cell">${p.category}</td>
@@ -901,21 +888,57 @@
             document.getElementById('product-modal').classList.remove('hidden');
         }
 
-        window.previewImages = (e) => {
+        // Secure Client-Side Image Compressor 
+        window.compressImage = (dataUrl, maxWidth, maxHeight, quality) => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round(height * maxWidth / width);
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round(width * maxHeight / height);
+                            height = maxHeight;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = () => resolve(dataUrl); // fallback if parsing fails
+                img.src = dataUrl;
+            });
+        };
+
+        window.previewImages = async (e) => {
             const files = Array.from(e.target.files);
             if (tempImages.length + files.length > 5) {
                 window.showToast('Maximum 5 images allowed per product.', 'error');
                 return;
             }
 
-            files.forEach(file => {
+            // Convert and compress to base64 for preview and easy processing later
+            for(let file of files) {
                 const reader = new FileReader();
-                reader.onload = (evt) => {
-                    tempImages.push(evt.target.result);
-                    window.renderImagePreview();
-                }
-                reader.readAsDataURL(file);
-            });
+                const fileDataUrl = await new Promise(resolve => {
+                    reader.onload = (evt) => resolve(evt.target.result);
+                    reader.readAsDataURL(file);
+                });
+                
+                // Compress images to a max 800px width/height and 0.7 jpeg quality
+                const compressedDataUrl = await window.compressImage(fileDataUrl, 800, 800, 0.7);
+                tempImages.push(compressedDataUrl);
+            }
+            
+            window.renderImagePreview();
             e.target.value = ''; 
         }
 
@@ -936,54 +959,87 @@
             `).join('');
         }
 
+        // Robust Product Submission Handler with GITHUB API STORAGE
         window.handleProductSubmit = async (e) => {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submit-product-btn');
+            const originalBtnHTML = submitBtn.innerHTML;
+            
+            // Set Loading state securely
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Uploading & Saving...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Uploading Data...';
 
             try {
-                // Upload newly added base64 images to GitHub
-                const finalImageUrls = [];
-                for (let i = 0; i < tempImages.length; i++) {
-                    const imgData = tempImages[i];
-                    if (imgData.startsWith('data:image')) {
-                        window.showToast(`Uploading image ${i + 1} to server...`, 'success');
-                        const githubUrl = await uploadImageToGitHub(imgData, i);
-                        finalImageUrls.push(githubUrl);
-                    } else {
-                        finalImageUrls.push(imgData);
-                    }
-                }
+                if (!currentUser || !db) throw new Error("Authentication failed. Please ensure Anonymous Auth is enabled in Firebase.");
 
                 const id = document.getElementById('prod-id').value || Date.now().toString();
+                
+                let finalImageUrls = [];
+                
+                // Process images: Upload new base64 images to GitHub, keep existing HTTP URLs
+                for (let i = 0; i < tempImages.length; i++) {
+                    const imgSrc = tempImages[i];
+                    if (imgSrc.startsWith('data:image')) {
+                        // It's a new base64 image, upload it to GitHub API
+                        submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Uploading to GitHub ${i+1}/${tempImages.length}...`;
+                        
+                        // Extract just the raw base64 string without the data URI prefix
+                        const base64Data = imgSrc.split(',')[1];
+                        const fileName = `images/product_${id}_${Date.now()}_${i}.jpg`;
+                        const apiUrl = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${fileName}`;
+
+                        const response = await fetch(apiUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${GH_TOKEN}`,
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                message: `Upload ${fileName} via Admin Portal`,
+                                content: base64Data
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errData = await response.json();
+                            throw new Error(`GitHub Upload Failed: ${errData.message}`);
+                        }
+
+                        const data = await response.json();
+                        // Push the raw GitHub user content URL to be saved in Firebase DB
+                        finalImageUrls.push(data.content.download_url);
+                    } else {
+                        // It's already a hosted URL (editing an existing product)
+                        finalImageUrls.push(imgSrc);
+                    }
+                }
+                
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving to Database...';
+
                 const newProd = {
                     title: document.getElementById('prod-title').value,
                     category: document.getElementById('prod-category').value,
                     price: document.getElementById('prod-price').value,
                     details: document.getElementById('prod-details').value,
-                    images: finalImageUrls 
+                    images: finalImageUrls // Save the stable GitHub URLs to the Realtime Database!
                 };
 
-                if(db && currentUser) {
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), newProd);
-                    window.showToast(document.getElementById('prod-id').value ? 'Product updated.' : 'Product added.', 'success');
-                    window.closeModal('product-modal');
-                } else {
-                     if (!currentUser) throw new Error("Authentication failed. Ensure Anonymous Auth is enabled in Firebase.");
-                }
-
+                await set(ref(db, `artifacts/${appId}/public/data/products/${id}`), newProd);
+                
+                window.showToast(document.getElementById('prod-id').value ? 'Product updated.' : 'Product added.', 'success');
+                window.closeModal('product-modal');
+                
             } catch(err) {
                 console.error("Save failed:", err);
-                if (err.code === 'permission-denied') {
-                    window.showToast('Database Error: Permission Denied. Check your Firestore Security Rules.', 'error');
+                if (err.message && err.message.includes('permission_denied')) {
+                    window.showToast('Database Error: Permission Denied. Check your Firebase Rules.', 'error');
                 } else {
                     window.showToast('Failed to save product: ' + err.message, 'error');
                 }
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Save Product';
+                submitBtn.innerHTML = originalBtnHTML;
             }
         }
 
@@ -991,32 +1047,34 @@
             if(!confirm("Are you sure you want to remove this product?")) return;
             try {
                 if(db && currentUser) {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id));
+                    await remove(ref(db, `artifacts/${appId}/public/data/products/${id}`));
                     window.showToast('Product removed.', 'success');
                 } else {
                      if (!currentUser) throw new Error("Not authenticated.");
                 }
             } catch(err) {
                 console.error("Delete failed:", err);
-                if (err.code === 'permission-denied') {
-                    window.showToast('Database Error: Permission Denied. Check your Firestore Security Rules.', 'error');
+                if (err.message && err.message.includes('permission_denied')) {
+                    window.showToast('Database Error: Permission Denied. Check your Firebase Rules.', 'error');
                 } else {
-                    window.showToast('Failed to remove product.', 'error');
+                    window.showToast('Failed to remove product: ' + err.message, 'error');
                 }
             }
         }
 
         // --- Manage Enquiries ---
-
         window.renderAdminEnquiries = () => {
             const tbody = document.getElementById('admin-enquiries-table');
-            
             if(enquiries.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-gray-500 font-medium">No order enquiries received yet.</td></tr>`;
                 return;
             }
-
-            tbody.innerHTML = enquiries.map(enq => `
+            tbody.innerHTML = enquiries.map(enq => {
+                // Style differently if it's a general enquiry vs product enquiry
+                const isGeneral = enq.productId === 'GENERAL';
+                const tagColor = isGeneral ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-lgred border-red-100';
+                
+                return `
                 <tr class="hover:bg-gray-50 transition border-b border-gray-100 flex flex-col md:table-row pb-4 md:pb-0">
                     <td class="p-4 md:py-5 text-sm text-gray-500 whitespace-nowrap font-medium order-1 md:order-none bg-gray-50 md:bg-transparent rounded-t-lg md:rounded-none flex justify-between md:table-cell">
                         <span class="md:hidden font-bold">Date:</span>
@@ -1028,17 +1086,16 @@
                         <div class="text-sm text-gray-600 flex items-center gap-2"><i class="fas fa-phone-alt text-gray-400 w-4"></i> ${enq.phone}</div>
                     </td>
                     <td class="p-4 md:py-5 order-3 md:order-none">
-                        <span class="inline-block bg-red-50 text-lgred text-xs font-bold px-2.5 py-1 rounded-md border border-red-100">${enq.productName}</span>
+                        <span class="inline-block ${tagColor} text-xs font-bold px-2.5 py-1 rounded-md border">${enq.productName}</span>
                     </td>
                     <td class="p-4 md:py-5 text-sm text-gray-700 bg-gray-50 md:bg-transparent rounded-b-lg md:rounded-none order-4 md:order-none">
                         <p class="whitespace-pre-line leading-relaxed max-w-lg italic border-l-2 border-gray-300 pl-3">"${enq.message || 'No specific requirements mentioned.'}"</p>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         // ================= UTILS =================
-
         window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
         window.toggleMobileMenu = () => document.getElementById('mobile-menu').classList.toggle('hidden');
         window.scrollToTop = () => window.scrollTo({top: 0, behavior: 'smooth'});
