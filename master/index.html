@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vakrat Corporate Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        
+        /* Custom Scrollbar - Slimmer, Professional */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .fade-in { animation: fadeIn 0.2s ease-in-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .glass-overlay { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(2px); }
+        .sidebar-active { background-color: #1e293b; border-left: 3px solid #A50034; color: white; }
+        
+        /* Enterprise Focus Rings */
+        input:focus, select:focus, textarea:focus {
+            box-shadow: 0 0 0 2px rgba(165, 0, 52, 0.2);
+            border-color: #A50034 !important;
+            outline: none;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#A50034',
+                        brandhover: '#820028',
+                        slate: {
+                            850: '#151e2e',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-slate-800 antialiased overflow-hidden h-screen flex">
+
+    <!-- Toast Notification System -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ================= LOGIN SCREEN ================= -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded shadow-2xl w-full max-w-sm p-8 fade-in relative z-10 border-t-4 border-brand">
+            <div class="text-center mb-8">
+                <div class="mx-auto w-12 h-12 bg-slate-100 text-brand rounded mb-4 flex items-center justify-center border border-slate-200">
+                    <i class="fas fa-shield-alt text-xl"></i>
+                </div>
+                <h1 class="font-bold text-2xl text-slate-900 tracking-tight">Vakrat Portal</h1>
+                <p class="text-slate-500 text-sm mt-1">Authorized corporate access only.</p>
+            </div>
+            
+            <div class="mb-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">User ID</label>
+                    <div class="relative mb-3">
+                        <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="admin-userid" class="w-full bg-white border border-slate-300 rounded px-4 py-2.5 pl-9 text-sm transition" placeholder="Enter User ID" onkeypress="if(event.key === 'Enter') enterDashboard()">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Access Key</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="password" id="admin-password" class="w-full bg-white border border-slate-300 rounded px-4 py-2.5 pl-9 text-sm transition" placeholder="Enter password" onkeypress="if(event.key === 'Enter') enterDashboard()">
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="enterDashboard()" class="w-full py-2.5 bg-slate-900 hover:bg-black text-white font-semibold rounded transition shadow-sm flex items-center justify-center gap-2 text-sm">
+                Authenticate Securely <i class="fas fa-arrow-right ml-1"></i>
+            </button>
+            <div class="mt-6 text-center">
+                <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Protected by Firebase Auth</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= DASHBOARD APP ================= -->
+    <div id="app-container" class="w-full h-full flex hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col h-full shrink-0 transition-transform duration-300 z-50 fixed md:relative -translate-x-full md:translate-x-0 border-r border-slate-800" id="sidebar">
+            <div class="h-16 flex items-center px-6 bg-slate-900 border-b border-slate-800">
+                <h2 class="text-lg font-bold text-white tracking-wider flex items-center gap-3 uppercase">
+                    <span class="w-6 h-6 bg-brand rounded-sm flex items-center justify-center text-xs shadow-sm"><i class="fas fa-v"></i></span>
+                    VAKRAT
+                </h2>
+            </div>
+            
+            <div class="flex-1 py-4 flex flex-col gap-1 px-3 overflow-y-auto">
+                <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 mt-2">Management Console</p>
+                
+                <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 hover:text-white transition flex items-center gap-3 text-sm sidebar-active">
+                    <i class="fas fa-chart-line w-5 text-center text-slate-400"></i> <span class="font-medium">Overview</span>
+                </button>
+                
+                <button onclick="switchView('products')" id="nav-products" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 hover:text-white transition flex items-center gap-3 text-sm">
+                    <i class="fas fa-database w-5 text-center text-slate-400"></i> <span class="font-medium">Product Catalog</span>
+                </button>
+                
+                <button onclick="switchView('enquiries')" id="nav-enquiries" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 hover:text-white transition flex items-center gap-3 relative text-sm">
+                    <i class="fas fa-inbox w-5 text-center text-slate-400"></i> <span class="font-medium">Order Enquiries</span>
+                    <span id="enq-badge" class="absolute right-3 top-1/2 -translate-y-1/2 bg-brand text-white text-[9px] font-bold px-1.5 py-0.5 rounded hidden">NEW</span>
+                </button>
+            </div>
+            
+            <div class="p-4 bg-slate-850 border-t border-slate-800">
+                <button onclick="logoutAdmin()" class="w-full py-2 px-3 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-700 hover:border-slate-600 rounded transition flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider">
+                    <i class="fas fa-lock"></i> Lock Session
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-full relative w-full overflow-hidden bg-slate-50">
+            
+            <!-- Top Header -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-30">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleSidebar()" class="md:hidden w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 focus:outline-none">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 id="header-title" class="text-lg font-semibold text-slate-800 tracking-tight">Overview Dashboard</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-green-50 rounded border border-green-200">
+                        <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        <span class="text-[11px] font-bold text-green-700 uppercase tracking-wider">System Online</span>
+                    </div>
+                    <div class="w-8 h-8 rounded bg-slate-800 text-white flex items-center justify-center font-bold text-xs shadow-sm cursor-pointer border border-slate-900" title="Admin User">
+                        AD
+                    </div>
+                </div>
+            </header>
+
+            <!-- Views Container -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-6 w-full" id="main-scroll-area">
+                
+                <!-- View: Dashboard Overview -->
+                <div id="view-dashboard" class="fade-in block space-y-6">
+                    
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white rounded-md p-5 border border-slate-200 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-5 right-5 text-slate-300"><i class="fas fa-database text-2xl"></i></div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Catalog</p>
+                            <h3 class="text-3xl font-bold text-slate-800" id="stat-products">0</h3>
+                            <p class="text-xs text-slate-400 mt-2">Active items in database</p>
+                        </div>
+                        <div class="bg-white rounded-md p-5 border border-slate-200 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-5 right-5 text-slate-300"><i class="fas fa-inbox text-2xl"></i></div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Enquiries</p>
+                            <h3 class="text-3xl font-bold text-slate-800" id="stat-enquiries">0</h3>
+                            <p class="text-xs text-slate-400 mt-2">Business leads generated</p>
+                        </div>
+                        <div class="bg-slate-900 rounded-md p-5 border border-slate-800 shadow-sm relative overflow-hidden text-white">
+                            <div class="absolute top-5 right-5 text-slate-700"><i class="fas fa-server text-2xl"></i></div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Database Sync</p>
+                            <h3 class="text-xl font-bold text-white mt-1 mb-2">Connected</h3>
+                            <p class="text-[10px] text-green-400 flex items-center gap-1"><i class="fas fa-check-circle"></i> Real-time active</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity Snippet -->
+                    <div class="bg-white rounded-md border border-slate-200 overflow-hidden shadow-sm">
+                        <div class="px-5 py-3 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                            <h3 class="font-semibold text-sm text-slate-800">Latest Enquiries</h3>
+                            <button onclick="switchView('enquiries')" class="text-xs text-brand font-semibold hover:underline">View All</button>
+                        </div>
+                        <div class="p-0">
+                            <ul id="recent-enquiries-list" class="divide-y divide-slate-100">
+                                <!-- Populated by JS -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View: Product Manager (Read Only) -->
+                <div id="view-products" class="fade-in hidden space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div class="relative w-full sm:w-80">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="search-products" placeholder="Search catalog by title or category..." onkeyup="filterAdminProducts()" class="w-full bg-white border border-slate-300 rounded px-3 py-2 pl-9 text-sm transition shadow-sm">
+                        </div>
+                       
+                    </div>
+
+                    <div class="bg-white rounded-md border border-slate-200 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200">
+                                        <th class="px-4 py-3 font-bold text-slate-600 text-[10px] uppercase tracking-wider w-16 text-center">Media</th>
+                                        <th class="px-4 py-3 font-bold text-slate-600 text-[10px] uppercase tracking-wider">Product Info</th>
+                                        <th class="px-4 py-3 font-bold text-slate-600 text-[10px] uppercase tracking-wider">Category</th>
+                                        <th class="px-4 py-3 font-bold text-slate-600 text-[10px] uppercase tracking-wider">Pricing</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-products-table" class="divide-y divide-slate-200 text-sm">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View: Enquiries (Read Only) -->
+                <div id="view-enquiries" class="fade-in hidden space-y-4">
+                    <!-- Enquiries Action Bar with Segmented Tabs -->
+                    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                        <div class="flex flex-col md:flex-row gap-3 w-full xl:w-auto">
+                            <!-- Enquiry Types Segmented Control -->
+                            <div class="bg-slate-200/80 p-1 rounded-md inline-flex w-full md:w-auto shrink-0 shadow-inner">
+                                <button onclick="setEnquiryTab('all')" id="tab-enq-all" class="flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded bg-white text-slate-800 shadow-sm transition">All Leads</button>
+                                <button onclick="setEnquiryTab('product')" id="tab-enq-product" class="flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded text-slate-500 hover:text-slate-800 transition">Product Orders</button>
+                                <button onclick="setEnquiryTab('general')" id="tab-enq-general" class="flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded text-slate-500 hover:text-slate-800 transition">General Enquiries</button>
+                            </div>
+                            
+                            <!-- Search -->
+                            <div class="relative w-full md:w-80 shrink-0">
+                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                <input type="text" id="search-enquiries" placeholder="Search by name, email, phone or product..." onkeyup="filterAdminEnquiries()" class="w-full bg-white border border-slate-300 rounded px-3 py-2 pl-9 text-sm transition shadow-sm h-full">
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-500 font-medium hidden xl:block">
+                            <i class="fas fa-lock mr-1"></i> Read-only mode
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-md border border-slate-200 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap md:whitespace-normal">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200">
+                                        <th class="px-4 py-3 font-bold text-slate-600 text-[10px] uppercase tracking-wider w-32">Received On</th>
+                                        <th class="px-4 py-3 font-bold text-slate-600 text-[10px] uppercase tracking-wider">Client Details</th>
+                                        <th class="px-4 py-3 font-bold text-slate-600 text-[10px] uppercase tracking-wider w-48">Interest / Product</th>
+                                        <th class="px-4 py-3 font-bold text-slate-600 text-[10px] uppercase tracking-wider w-1/3">Message Snippet</th>
+                                        <th class="px-4 py-3 font-bold text-slate-600 text-[10px] uppercase tracking-wider text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-enquiries-table" class="divide-y divide-slate-200 text-sm">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden"></div>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Enquiry Read Modal -->
+    <div id="read-enquiry-modal" class="fixed inset-0 glass-overlay z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded shadow-2xl w-full max-w-lg overflow-hidden fade-in relative border border-slate-200">
+            <div class="bg-slate-50 border-b border-slate-200 px-5 py-3 flex justify-between items-center">
+                <h3 class="font-bold text-sm text-slate-800 uppercase tracking-tight">Lead Details</h3>
+                <button type="button" onclick="closeModal('read-enquiry-modal')" class="text-slate-400 hover:text-slate-800 transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="mb-4 pb-4 border-b border-slate-100">
+                    <h3 class="font-bold text-xl text-slate-900 mb-1" id="read-enq-name"></h3>
+                    <div class="flex flex-col gap-1 text-sm text-slate-600 mt-2">
+                        <span id="read-enq-email"><i class="fas fa-envelope mr-2 w-4 text-slate-400"></i></span>
+                        <span id="read-enq-phone"><i class="fas fa-phone mr-2 w-4 text-slate-400"></i></span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Target Product</span>
+                    <span id="read-enq-product" class="inline-block bg-slate-100 text-slate-800 px-2 py-1 rounded text-sm font-semibold border border-slate-200"></span>
+                </div>
+                
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Message Provided</span>
+                    <div class="bg-slate-50 p-4 rounded border border-slate-200 text-sm text-slate-700 whitespace-pre-line leading-relaxed font-mono" id="read-enq-message"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // ================= STATE & DATA =================
+        let products = []; 
+        let filteredProducts = [];
+        let enquiries = [];
+        let filteredEnquiries = [];
+        let currentEnquiryTab = 'all';
+
+        // ================= FIREBASE SETUP =================
+        let app, auth, db;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'vakrat-app';
+        let currentUser = null;
+
+        const MY_CUSTOM_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBM7d97tLpLCMtBpsND7Nl5YwNeffNqyEI",
+            authDomain: "vakrat-6e20e.firebaseapp.com",
+            databaseURL: "https://vakrat-6e20e-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "vakrat-6e20e",
+            storageBucket: "vakrat-6e20e.firebasestorage.app",
+            messagingSenderId: "404421450406",
+            appId: "1:404421450406:web:8bc5ffb1abe2f788e4f267",
+            measurementId: "G-BYZ3GTJ972"
+        };
+
+        try {
+            const firebaseConfig = typeof __firebase_config !== 'undefined' && __firebase_config ? JSON.parse(__firebase_config) : MY_CUSTOM_FIREBASE_CONFIG;
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getDatabase(app); 
+            
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) {
+                    setupDatabaseListeners();
+                }
+            });
+        } catch (error) {
+            console.error("Firebase Initialization Error:", error);
+            window.showToast("Database Initialization failed.", "error");
+        }
+
+        // Authentication Handlers
+        window.enterDashboard = async () => {
+            const uid = document.getElementById('admin-userid').value;
+            const pwd = document.getElementById('admin-password').value;
+            
+            if (uid !== 'vakrat.atri' || pwd !== 'vakrat@7814') {
+                window.showToast("Access Denied: Invalid Credentials.", "error");
+                return;
+            }
+
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                
+                // Clear fields for security
+                document.getElementById('admin-userid').value = '';
+                document.getElementById('admin-password').value = ''; 
+                
+                window.switchView('dashboard');
+                window.showToast("Authenticated successfully");
+            } catch (e) {
+                console.error("Auth error:", e);
+                window.showToast("Authentication Failed. Check configuration.", "error");
+            }
+        };
+
+        window.logoutAdmin = () => {
+            signOut(auth).then(() => {
+                document.getElementById('app-container').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+            });
+        };
+
+        // Database Listeners
+        function setupDatabaseListeners() {
+            if (!currentUser || !db) return;
+
+            const productsRef = ref(db, `artifacts/${appId}/public/data/products`);
+            onValue(productsRef, (snapshot) => {
+                products = [];
+                snapshot.forEach(child => {
+                    products.push({ id: child.key, ...child.val() });
+                });
+                window.filterAdminProducts(); 
+                updateDashboardStats();
+            });
+
+            const enquiriesRef = ref(db, `artifacts/${appId}/public/data/enquiries`);
+            onValue(enquiriesRef, (snapshot) => {
+                enquiries = [];
+                snapshot.forEach(child => {
+                    enquiries.push({ id: child.key, ...child.val() });
+                });
+                enquiries.sort((a, b) => b.timestamp - a.timestamp);
+                
+                window.filterAdminEnquiries(); 
+                updateDashboardStats();
+                window.renderRecentEnquiries();
+                
+                // Show badge if there are enquiries
+                if(enquiries.length > 0) {
+                    document.getElementById('enq-badge').classList.remove('hidden');
+                } else {
+                    document.getElementById('enq-badge').classList.add('hidden');
+                }
+            });
+        }
+
+        // ================= UI ROUTING =================
+        window.switchView = (viewName) => {
+            // Hide all views
+            ['view-dashboard', 'view-products', 'view-enquiries'].forEach(v => {
+                document.getElementById(v).classList.add('hidden');
+            });
+            
+            // Remove active state from nav
+            ['nav-dashboard', 'nav-products', 'nav-enquiries'].forEach(n => {
+                document.getElementById(n).classList.remove('sidebar-active');
+            });
+
+            // Show selected view
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            document.getElementById(`nav-${viewName}`).classList.add('sidebar-active');
+            
+            // Update Header Title
+            const titles = { 'dashboard': 'Overview Dashboard', 'products': 'Product Catalog Viewing', 'enquiries': 'Lead & Order Records' };
+            document.getElementById('header-title').textContent = titles[viewName];
+
+            // Close mobile sidebar if open
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if(!sidebar.classList.contains('-translate-x-full')) {
+                    window.toggleSidebar();
+                }
+            }
+        };
+
+        window.toggleSidebar = () => {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        };
+
+        // ================= DASHBOARD RENDERERS =================
+        function updateDashboardStats() {
+            document.getElementById('stat-products').textContent = products.length;
+            document.getElementById('stat-enquiries').textContent = enquiries.length;
+        }
+
+        window.renderRecentEnquiries = () => {
+            const list = document.getElementById('recent-enquiries-list');
+            const recent = enquiries.slice(0, 4); // Get top 4
+            
+            if(recent.length === 0) {
+                list.innerHTML = `<li class="p-5 text-center text-slate-500 text-sm">No recent leads found.</li>`;
+                return;
+            }
+
+            list.innerHTML = recent.map(enq => `
+                <li class="px-5 py-3 hover:bg-slate-50 transition cursor-pointer flex items-center justify-between" onclick="readEnquiry('${enq.id}')">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded border border-slate-200 bg-white text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                            ${(enq.name || '?').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-sm text-slate-800">${enq.name}</p>
+                            <p class="text-[11px] text-slate-500 truncate w-40 sm:w-64 font-medium">${enq.productName}</p>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider whitespace-nowrap">${enq.date}</div>
+                </li>
+            `).join('');
+        };
+
+        // ================= PRODUCT MANAGER =================
+        window.filterAdminProducts = () => {
+            const term = (document.getElementById('search-products').value || '').toLowerCase();
+            filteredProducts = products.filter(p => 
+                (p.title || '').toLowerCase().includes(term) || 
+                (p.category || '').toLowerCase().includes(term)
+            );
+            window.renderAdminProducts();
+        };
+
+        window.renderAdminProducts = () => {
+            const tbody = document.getElementById('admin-products-table');
+            if(filteredProducts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-10 text-center text-slate-500 text-sm bg-white">No products found.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filteredProducts.map(p => {
+                const img = p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/50?text=NA';
+                return `
+                <tr class="hover:bg-slate-50 transition bg-white group">
+                    <td class="px-4 py-3 text-center">
+                        <div class="w-10 h-10 mx-auto rounded bg-white border border-slate-200 overflow-hidden flex items-center justify-center p-0.5 shadow-sm">
+                            <img src="${img}" class="max-w-full max-h-full object-contain mix-blend-multiply">
+                        </div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="font-semibold text-slate-800">${p.title}</div>
+                        <div class="text-[11px] text-slate-500 line-clamp-1 mt-0.5 w-48 lg:w-64" title="${p.details}">${p.details}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="inline-block text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-200 bg-slate-100">${p.category}</span>
+                    </td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">${p.price || '-'}</td>
+                </tr>
+            `}).join('');
+        };
+
+        // ================= ENQUIRIES MANAGER =================
+        
+        window.setEnquiryTab = (tab) => {
+            currentEnquiryTab = tab;
+            
+            // Update tab button styles
+            ['all', 'product', 'general'].forEach(t => {
+                const btn = document.getElementById(`tab-enq-${t}`);
+                if (t === tab) {
+                    btn.classList.add('bg-white', 'shadow-sm', 'text-slate-800');
+                    btn.classList.remove('text-slate-500', 'hover:text-slate-800');
+                } else {
+                    btn.classList.remove('bg-white', 'shadow-sm', 'text-slate-800');
+                    btn.classList.add('text-slate-500', 'hover:text-slate-800');
+                }
+            });
+            
+            window.filterAdminEnquiries();
+        };
+
+        window.filterAdminEnquiries = () => {
+            const term = (document.getElementById('search-enquiries').value || '').toLowerCase();
+            filteredEnquiries = enquiries.filter(e => {
+                const matchesSearch = (e.name || '').toLowerCase().includes(term) || 
+                                      (e.email || '').toLowerCase().includes(term) ||
+                                      (e.phone || '').toLowerCase().includes(term) ||
+                                      (e.productName || '').toLowerCase().includes(term);
+                
+                let matchesTab = true;
+                if (currentEnquiryTab === 'product') matchesTab = e.productId !== 'GENERAL';
+                if (currentEnquiryTab === 'general') matchesTab = e.productId === 'GENERAL';
+
+                return matchesSearch && matchesTab;
+            });
+            window.renderAdminEnquiries();
+        };
+
+        window.renderAdminEnquiries = () => {
+            const tbody = document.getElementById('admin-enquiries-table');
+            if(filteredEnquiries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-slate-500 text-sm bg-white">No enquiries match criteria.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filteredEnquiries.map(enq => {
+                const isGeneral = enq.productId === 'GENERAL';
+                const tagStyle = isGeneral ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-700 border-slate-200';
+                
+                return `
+                <tr class="hover:bg-slate-50 transition bg-white border-b border-slate-100 group">
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="font-semibold text-slate-800">${enq.date}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${new Date(enq.timestamp || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="font-bold text-slate-800 mb-0.5">${enq.name}</div>
+                        <div class="text-[11px] text-slate-500"><i class="fas fa-envelope text-slate-400 mr-1 w-3"></i> ${enq.email}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5"><i class="fas fa-phone-alt text-slate-400 mr-1 w-3"></i> ${enq.phone}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="inline-block ${tagStyle} text-[10px] font-bold px-1.5 py-0.5 rounded border leading-tight break-words max-w-[160px] whitespace-normal">
+                            ${enq.productName}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-600">
+                        <p class="truncate w-48 lg:w-64 text-sm" title="${enq.message || ''}">${enq.message || 'No message provided.'}</p>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <button onclick="readEnquiry('${enq.id}')" class="text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 px-2.5 py-1.5 rounded transition shadow-sm">
+                            View Details
+                        </button>
+                    </td>
+                </tr>
+            `}).join('');
+        };
+
+        window.readEnquiry = (id) => {
+            const enq = enquiries.find(e => e.id === id);
+            if(!enq) return;
+
+            document.getElementById('read-enq-name').textContent = enq.name;
+            document.getElementById('read-enq-email').innerHTML = `<i class="fas fa-envelope mr-2 w-4 text-slate-400"></i> ${enq.email}`;
+            document.getElementById('read-enq-phone').innerHTML = `<i class="fas fa-phone mr-2 w-4 text-slate-400"></i> ${enq.phone}`;
+            document.getElementById('read-enq-product').textContent = enq.productName;
+            document.getElementById('read-enq-message').textContent = enq.message || "No specific requirements mentioned.";
+
+            document.getElementById('read-enquiry-modal').classList.remove('hidden');
+        };
+
+        // ================= UTILITIES =================
+        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+
+        window.showToast = (message, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const style = type === 'success' ? 'bg-slate-900 border-brand' : 'bg-red-900 border-red-500';
+            const icon = type === 'success' ? 'fa-check-circle text-brand' : 'fa-exclamation-triangle text-red-400';
+            
+            toast.className = `${style} border-l-4 text-white px-4 py-3 rounded shadow-xl flex items-center gap-3 fade-in text-sm font-medium`;
+            toast.innerHTML = `<i class="fas ${icon} text-base"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px) translateX(20px)';
+                toast.style.transition = 'all 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+    </script>
+</body>
+</html>
